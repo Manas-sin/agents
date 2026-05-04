@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Infi — Homework Buddy</title>
+    <link rel="stylesheet" href="/static/styles.css?v=9" />
+  </head>
+  <body>
+    <!-- Splash: one tap to enable voice + reveal app -->
+    <div id="splash" class="splash">
+      <div class="splash-card">
+        <h1 class="splash-logo">Infi</h1>
+        <p class="splash-tag">Homework Buddy</p>
+        <p class="splash-line">Abey scene kya hai bhai? 👋</p>
+        <p class="splash-sub">Tap kar — main bolke welcome karta hu.</p>
+        <button id="splash-go" class="splash-btn">🔊 Suno aur shuru karo</button>
+      </div>
+    </div>
+
+    <main class="app hidden" id="main-app">
+      <header>
+        <h1>Infi</h1>
+        <span class="tag">Homework Buddy</span>
+        <button id="tts-toggle" class="tts-btn" title="Voice on/off">🔇</button>
+      </header>
+
+      <!-- Screen 1: input (text or photo) -->
+      <section id="screen-input" class="screen active">
+        <div class="greeting">
+          <p class="greeting-line">
+            Scene set bhai 😎
+            <button id="greeting-speak" class="speak-btn" title="Sun">🔊 Sun</button>
+          </p>
+          <p class="greeting-sub">Apna homework paste kar ya photo daal — chal nikalte hain isse.</p>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="chat">💬 Chat</button>
+          <button class="tab" data-tab="type">📝 Worksheet</button>
+          <button class="tab" data-tab="photo">📸 Photo</button>
+        </div>
+
+        <div id="tab-chat" class="tab-panel active">
+          <p class="muted" style="margin: 0 0 8px;">Bas baat kar — Infi sun raha hai.</p>
+          <button id="start-chat-btn" class="primary">Chat shuru karo</button>
+        </div>
+
+        <div id="tab-type" class="tab-panel">
+          <textarea
+            id="homework-text"
+            rows="8"
+            placeholder="e.g. 1) Solve 2x + 5 = 11&#10;2) Find area of triangle with base 6, height 4..."
+          ></textarea>
+          <button id="start-btn">Start</button>
+        </div>
+
+        <div id="tab-photo" class="tab-panel">
+          <label class="dropzone" for="image-input">
+            <span class="dropzone-icon">📸</span>
+            <span class="dropzone-text">Camera khol ya gallery se photo chuno</span>
+            <span class="dropzone-hint">JPG / PNG / HEIC, max 8 MB</span>
+          </label>
+          <input id="image-input" type="file" accept="image/*" capture="environment" hidden />
+          <div id="image-preview" class="hidden">
+            <img id="image-preview-img" alt="preview" />
+            <div class="preview-actions">
+              <button id="image-clear-btn" class="ghost">Hatao</button>
+              <button id="image-start-btn">Iska homework karo</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 1.5: free chat mode -->
+      <section id="screen-chat" class="screen">
+        <div class="chat-header">
+          <h2 style="margin: 0;">Chat with Infi</h2>
+          <button id="chat-back-btn" class="ghost" style="margin: 0; padding: 6px 12px; font-size: 13px;">← Back</button>
+        </div>
+        <div class="chat" id="chat-free"></div>
+        <div class="composer">
+          <input id="chat-free-input" type="text" placeholder="Pucho kuch bhi..." />
+          <button id="chat-free-send">Send</button>
+        </div>
+      </section>
+
+      <!-- Screen 2: review breakdown -->
+      <section id="screen-breakdown" class="screen">
+        <h2>Plan dekh le</h2>
+        <p class="muted" id="breakdown-meta"></p>
+        <ol id="breakdown-list"></ol>
+        <button id="confirm-breakdown-btn">Order theek hai</button>
+      </section>
+
+      <!-- Screen 3: solve a step -->
+      <section id="screen-solver" class="screen">
+        <h2 id="step-title">Step</h2>
+        <div class="step-meta" id="step-meta"></div>
+        <div class="chat" id="chat"></div>
+        <div class="composer">
+          <input id="chat-input" type="text" placeholder="Type something or use a button..." />
+          <button id="send-btn">Send</button>
+        </div>
+        <div class="actions">
+          <button data-action="hint">Hint do</button>
+          <button data-action="done" class="primary">Ho gaya</button>
+          <button data-action="skip" class="ghost">Skip</button>
+        </div>
+      </section>
+
+      <!-- Screen 4: completion check -->
+      <section id="screen-completion" class="screen">
+        <h2 id="completion-msg">Lagta hai ho gaya?</h2>
+        <div class="actions">
+          <button id="confirm-done-btn" class="primary">Haan, done</button>
+          <button id="not-done-btn" class="ghost">Nahi, thoda baaki</button>
+        </div>
+      </section>
+
+      <!-- Screen 5: saved -->
+      <section id="screen-saved" class="screen">
+        <h2>Done! 🎉</h2>
+        <p>Library mein save ho gaya. Mast kaam kiya bhai!</p>
+        <button id="restart-btn">Naya homework</button>
+      </section>
+
+      <div id="error-banner" class="error-banner hidden">
+        <span id="error-text"></span>
+        <button id="error-close">×</button>
+      </div>
+
+      <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <p id="loading-text">Soch raha hu...</p>
+      </div>
+    </main>
+
+    <script src="/static/app.js?v=9"></script>
+  </body>
+</html>
