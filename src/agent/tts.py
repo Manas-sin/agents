@@ -17,8 +17,22 @@ from .config import Settings
 
 _LIVE_MODEL = "models/gemini-2.5-flash-native-audio-latest"
 _FAST_TTS_MODEL = "gemini-2.5-flash-preview-tts"  # generates ~4x real-time
-_DEFAULT_VOICE = "Charon"  # deep, calm — closest to a Samay-Raina deadpan vibe
+_DEFAULT_VOICE = "Kore"  # firm, grounded female — calm bestie vibe
 _PCM_RATE = 24000
+
+# Style prefix tells preview-tts to code-switch correctly between Hindi and
+# English: Hindi words ("bhasad", "yaar") in Hindi pronunciation, English words
+# ("scenes", "chill", "exam") in normal English pronunciation. Without this the
+# model either reads everything letter-by-letter or applies one accent globally.
+_HINGLISH_STYLE = (
+    "Read the following as a young Indian speaker speaking natural casual "
+    "Hinglish — code-switch fluidly: pronounce Hindi/Romanized-Hindi words "
+    "(bhasad, yaar, bhai, kya, scene-kya-hai's 'kya hai') the way a native "
+    "Hindi speaker would, AND pronounce English words (scenes, chill, exam, "
+    "homework, quiz) with their normal English pronunciation — NOT spelled "
+    "out letter-by-letter, NOT with an exaggerated accent. Smooth, "
+    "conversational, like a friend on a call: "
+)
 _PCM_CHANNELS = 1
 _PCM_SAMPLE_WIDTH = 2
 
@@ -37,7 +51,7 @@ def synthesize(text: str, settings: Settings, voice: str = _DEFAULT_VOICE) -> by
     client = _client_for(settings.google_api_key)
     response = client.models.generate_content(
         model=_FAST_TTS_MODEL,
-        contents=text,
+        contents=_HINGLISH_STYLE + text,
         config=types.GenerateContentConfig(
             response_modalities=["AUDIO"],
             speech_config=types.SpeechConfig(
@@ -97,7 +111,7 @@ async def _live_call(
                 prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=voice)
             )
         ),
-        thinking_config=types.ThinkingConfig(thinking_budget=0),
+        thinking_config=types.ThinkingConfig(thinking_budget=512),
         system_instruction=types.Content(parts=[types.Part(text=system_prompt)]),
         output_audio_transcription=types.AudioTranscriptionConfig(),
     )

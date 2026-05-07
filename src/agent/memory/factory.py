@@ -1,6 +1,8 @@
+from pathlib import Path
+
 from ..config import Settings
 from ..interfaces import MemoryStore
-from .in_memory import InMemoryStore
+from .file_store import FileStore
 
 
 def create_memory(settings: Settings) -> MemoryStore:
@@ -11,4 +13,4 @@ def create_memory(settings: Settings) -> MemoryStore:
             api_key=settings.honcho_api_key,
             app_name=settings.honcho_app_name,
         )
-    return InMemoryStore()
+    return FileStore(Path(settings.memory_file_path))

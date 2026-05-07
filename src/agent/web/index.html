@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Infi — Homework Buddy</title>
-    <link rel="stylesheet" href="/static/styles.css?v=9" />
+    <link rel="stylesheet" href="/static/styles.css?v=10" />
   </head>
   <body>
     <!-- Splash: one tap to enable voice + reveal app -->
@@ -29,10 +29,10 @@
       <section id="screen-input" class="screen active">
         <div class="greeting">
           <p class="greeting-line">
-            Scene set bhai 😎
+            Or bhai, kya haal hain! 😎
             <button id="greeting-speak" class="speak-btn" title="Sun">🔊 Sun</button>
           </p>
-          <p class="greeting-sub">Apna homework paste kar ya photo daal — chal nikalte hain isse.</p>
+          <p class="greeting-sub">Homework mein madad chahiye? Tension nahi le, main hu na.</p>
         </div>
 
         <div class="tabs">
@@ -76,7 +76,10 @@
       <section id="screen-chat" class="screen">
         <div class="chat-header">
           <h2 style="margin: 0;">Chat with Infi</h2>
-          <button id="chat-back-btn" class="ghost" style="margin: 0; padding: 6px 12px; font-size: 13px;">← Back</button>
+          <div style="display: flex; gap: 8px;">
+            <button id="chat-new-btn" class="ghost" style="margin: 0; padding: 6px 12px; font-size: 13px;" title="Start a fresh chat — clears prior history">＋ New chat</button>
+            <button id="chat-back-btn" class="ghost" style="margin: 0; padding: 6px 12px; font-size: 13px;">← Back</button>
+          </div>
         </div>
         <div class="chat" id="chat-free"></div>
         <div class="composer">
@@ -136,6 +139,6 @@
       </div>
     </main>
 
-    <script src="/static/app.js?v=9"></script>
+    <script src="/static/app.js?v=10"></script>
   </body>
 </html>

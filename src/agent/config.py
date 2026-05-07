@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     honcho_api_key: str | None = None
     honcho_app_name: str = "agent-app"
 
+    memory_file_path: str = ".infi-memory.json"
+
 
 @lru_cache
 def get_settings() -> Settings:

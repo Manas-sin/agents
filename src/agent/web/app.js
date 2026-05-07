@@ -15,7 +15,10 @@ const state = {
 };
 
 const GREETING =
-  "Abey scene kya hai bhai! Apna homework paste kar ya photo daal — chal nikalte hain isse.";
+  "Or bhai, kya haal hain! Homework mein madad chahiye? Tension nahi le....!, main hu na.";
+
+// Pre-rendered on the server at startup; if missing we fall back to /api/tts.
+const GREETING_STATIC_URL = "/static/greeting.wav";
 
 function show(name) {
   Object.values(screens).forEach((s) => s.classList.remove("active"));
@@ -34,7 +37,7 @@ document.getElementById("error-close").onclick = () =>
 function setLoading(on, text) {
   const el = document.getElementById("loading");
   if (on) {
-    document.getElementById("loading-text").textContent = text || "Soch raha hu...";
+    document.getElementById("loading-text").textContent = text || "Soch rahi hu...";
     el.classList.remove("hidden");
   } else {
     el.classList.add("hidden");
@@ -88,6 +91,18 @@ function stopAudio() {
 
 async function fetchTtsUrl(text) {
   if (audioCache.has(text)) return audioCache.get(text);
+
+  // Splash greeting? Try the pre-rendered static file first — zero LLM hop.
+  if (text === GREETING) {
+    try {
+      const head = await fetch(GREETING_STATIC_URL, { method: "HEAD" });
+      if (head.ok) {
+        audioCache.set(text, GREETING_STATIC_URL);
+        return GREETING_STATIC_URL;
+      }
+    } catch (e) { /* fall through to /api/tts */ }
+  }
+
   const res = await fetch("/api/tts", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -137,8 +152,13 @@ document.getElementById("greeting-speak").onclick = () => speak(GREETING, true);
 
 const splash = document.getElementById("splash");
 const mainApp = document.getElementById("main-app");
+
+// Pre-fetch greeting audio on page load so the splash tap feels instant.
+// Starts in background — browsers don't block on this.
+fetchTtsUrl(GREETING).catch((e) => console.warn("[tts] greeting prefetch failed:", e));
+
 document.getElementById("splash-go").onclick = () => {
-  // unlock TTS by speaking on the user-gesture stack
+  // unlock TTS by speaking on the user-gesture stack — audio is already cached
   speak(GREETING, true);
   splash.classList.add("fade-out");
   mainApp.classList.remove("hidden");
@@ -275,7 +295,7 @@ document.querySelectorAll(".tab").forEach((tab) => {
 document.getElementById("start-btn").onclick = async () => {
   const text = document.getElementById("homework-text").value.trim();
   if (!text) return showError("Kuch toh likh yaar!");
-  setLoading(true, "Plan bana raha hu...");
+  setLoading(true, "Plan bana rahi hu...");
   try {
     const res = await api("/api/sessions", "POST", { homework_text: text });
     render(res);
@@ -288,7 +308,8 @@ document.getElementById("start-btn").onclick = async () => {
 
 // ─── Free chat mode ────────────────────────────────────────────────────────────
 
-const chatSession = { id: null };
+const CHAT_SESSION_KEY = "infi.chatSessionId";
+const chatSession = { id: localStorage.getItem(CHAT_SESSION_KEY) };
 
 function uuid() {
   return "chat-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
@@ -369,7 +390,7 @@ function appendFollowUpChips(items) {
 
 async function sendChatMessage(text) {
   appendChatBubble(text, "user");
-  setLoading(true, "Soch raha hu...");
+  setLoading(true, "Soch rahi hu...");
   try {
     const res = await api("/api/chat", "POST", {
       session_id: chatSession.id,
@@ -386,14 +407,19 @@ async function sendChatMessage(text) {
 }
 
 document.getElementById("start-chat-btn").onclick = async () => {
+  // Always start fresh: new session id every time chat is opened. No reuse
+  // of localStorage session, no history auto-render. Server-side memory for
+  // the old session becomes orphaned and gets cleaned by "New chat" button
+  // (or just stays unused — new session_id means it's unreachable).
   chatSession.id = uuid();
+  localStorage.setItem(CHAT_SESSION_KEY, chatSession.id);
   document.getElementById("chat-free").replaceChildren();
   show("chat");
   setLoading(true, "Connecting...");
   try {
     const res = await api("/api/chat", "POST", {
       session_id: chatSession.id,
-      message: "(student just opened chat — greet them in your style and ask what they want help with)",
+      message: "(student just opened chat — greet them casually, ask kya scene hai / kya krein aaj. DO NOT assume they're stuck on homework or have a problem — they might just want to chat, gossip, or hang out. Keep it open and chill.)",
     });
     appendChatBubble(res.reply, "bot");
     playB64Wav(res.audio_b64);
@@ -422,6 +448,26 @@ document.getElementById("chat-back-btn").onclick = () => {
   show("input");
 };
 
+document.getElementById("chat-new-btn").onclick = async () => {
+  if (!confirm("Start a fresh chat? Prior history will be cleared.")) return;
+  stopAudio();
+  const oldId = chatSession.id;
+  // Wipe local session pointer so the next open creates a new one.
+  localStorage.removeItem(CHAT_SESSION_KEY);
+  chatSession.id = null;
+  // Best-effort: ask the server to forget the old session's memory too.
+  // If the endpoint doesn't exist, swallow the error — local state is reset
+  // either way, and a new session_id means the old memory is unreachable.
+  if (oldId) {
+    try {
+      await api(`/api/chat/${oldId}`, "DELETE");
+    } catch (e) { /* server-side wipe is optional */ }
+  }
+  document.getElementById("chat-free").replaceChildren();
+  // Re-trigger the start-chat flow with a fresh session.
+  document.getElementById("start-chat-btn").click();
+};
+
 // ─── Image path ────────────────────────────────────────────────────────────────
 
 const imageInput = document.getElementById("image-input");
@@ -442,7 +488,7 @@ document.getElementById("image-clear-btn").onclick = () => {
 
 document.getElementById("image-start-btn").onclick = async () => {
   if (!state.pickedFile) return;
-  setLoading(true, "Photo dekh raha hu...");
+  setLoading(true, "Photo dekh rahi hu...");
   try {
     const res = await uploadImage(state.pickedFile);
     render(res);
@@ -456,7 +502,7 @@ document.getElementById("image-start-btn").onclick = async () => {
 // ─── Breakdown / solver / completion ───────────────────────────────────────────
 
 document.getElementById("confirm-breakdown-btn").onclick = async () => {
-  setLoading(true, "Step ready kar raha hu...");
+  setLoading(true, "Step ready kar rahi hu...");
   try {
     const res = await api(`/api/sessions/${state.sessionId}/resume`, "POST", {
       payload: { action: "confirm" },
@@ -472,7 +518,7 @@ document.getElementById("confirm-breakdown-btn").onclick = async () => {
 
 async function sendStepAction(action, text = "") {
   if (text) appendBubble(text, "user");
-  setLoading(true, "Soch raha hu...");
+  setLoading(true, "Soch rahi hu...");
   try {
     const res = await api(`/api/sessions/${state.sessionId}/resume`, "POST", {
       payload: { action, text },
@@ -502,7 +548,7 @@ document.querySelectorAll("#screen-solver .actions button").forEach((btn) => {
 });
 
 document.getElementById("confirm-done-btn").onclick = async () => {
-  setLoading(true, "Save kar raha hu...");
+  setLoading(true, "Save kar rahi hu...");
   try {
     const res = await api(`/api/sessions/${state.sessionId}/resume`, "POST", {
       payload: { confirmed: true },

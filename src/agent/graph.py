@@ -62,3 +62,7 @@ def build_homework_graph(settings: Settings):
 
     checkpointer = InMemorySaver()
     return graph.compile(checkpointer=checkpointer)
+
+
+def make_graph():
+    return build_homework_graph(Settings())
